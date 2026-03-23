@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buffett-Style Investment Scorecard | Powered by KeepRule</title>
+<meta name="description" content="Rate any stock using Warren Buffett's investing principles. Free interactive scorecard with 10 key dimensions.">
+<meta property="og:title" content="Buffett-Style Investment Scorecard | KeepRule">
+<meta property="og:description" content="Rate any stock using Warren Buffett's investing principles. 10 dimensions, instant grade.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://keeprule.github.io/keeprule-investment-scorecard/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--bg2:#16213e;--bg3:#0f3460;--gold:#d4af37;--gold-dim:#b8962e;--text:#e8e8e8;--text-dim:#a0a0b0;--green:#4caf50;--red:#e74c3c;--orange:#ff9800;--card:#1e2a4a;--border:#2a3a5a}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.container{max-width:800px;margin:0 auto;padding:20px}
+
+/* Header */
+header{text-align:center;padding:40px 20px 30px;border-bottom:1px solid var(--border)}
+header h1{font-size:1.8rem;color:var(--gold);margin-bottom:8px;letter-spacing:0.5px}
+header p{color:var(--text-dim);font-size:1rem}
+.powered-by{display:inline-block;margin-top:12px;padding:4px 14px;border:1px solid var(--gold-dim);border-radius:20px;font-size:0.8rem;color:var(--gold-dim)}
+
+/* Stock Info */
+.section{margin:30px 0}
+.section-title{font-size:1.2rem;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';display:inline-block;width:4px;height:20px;background:var(--gold);border-radius:2px}
+
+.stock-info{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stock-info label{display:flex;flex-direction:column;gap:4px;font-size:0.85rem;color:var(--text-dim)}
+.stock-info input,.stock-info select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:0.95rem;outline:none;transition:border-color 0.2s}
+.stock-info input:focus,.stock-info select:focus{border-color:var(--gold)}
+
+/* Dimensions */
+.dimension{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;transition:border-color 0.2s}
+.dimension:hover{border-color:var(--gold-dim)}
+.dim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dim-name{font-size:1rem;font-weight:600}
+.dim-score-display{font-size:1.4rem;font-weight:700;color:var(--gold);min-width:40px;text-align:right}
+.dim-desc{font-size:0.82rem;color:var(--text-dim);margin-bottom:12px}
+
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-row span{font-size:0.75rem;color:var(--text-dim);min-width:14px}
+input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;background:var(--bg);border-radius:3px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 6px rgba(212,175,55,0.4)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+
+.dim-quote{margin-top:12px;padding:10px 14px;background:rgba(212,175,55,0.08);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;font-size:0.82rem;font-style:italic;color:var(--gold-dim)}
+.dim-quote .quote-attr{display:block;font-style:normal;font-size:0.75rem;color:var(--text-dim);margin-top:4px}
+
+/* Results */
+#results{display:none}
+.results-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:2px solid var(--gold);border-radius:16px;padding:30px;text-align:center}
+.total-score{font-size:4rem;font-weight:800;color:var(--gold);line-height:1}
+.total-label{font-size:0.9rem;color:var(--text-dim);margin-top:4px}
+.grade{display:inline-block;margin:16px 0;padding:8px 32px;font-size:2rem;font-weight:800;border-radius:12px;letter-spacing:2px}
+.grade-A{background:rgba(76,175,80,0.2);color:#4caf50;border:2px solid #4caf50}
+.grade-B{background:rgba(139,195,74,0.2);color:#8bc34a;border:2px solid #8bc34a}
+.grade-C{background:rgba(255,152,0,0.2);color:#ff9800;border:2px solid #ff9800}
+.grade-D{background:rgba(255,87,34,0.2);color:#ff5722;border:2px solid #ff5722}
+.grade-F{background:rgba(231,76,60,0.2);color:#e74c3c;border:2px solid #e74c3c}
+.verdict{font-size:1rem;color:var(--text-dim);max-width:500px;margin:12px auto 0}
+
+.score-breakdown{margin:24px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left}
+.breakdown-item{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:0.85rem}
+.breakdown-item .bi-score{font-weight:700;color:var(--gold)}
+
+.results-cta{margin-top:24px;padding:20px;background:rgba(212,175,55,0.1);border-radius:12px;border:1px solid var(--gold-dim)}
+.results-cta p{font-size:0.9rem;color:var(--text-dim);margin-bottom:12px}
+
+/* Buttons */
+.btn{display:inline-block;padding:12px 28px;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-gold{background:var(--gold);color:var(--bg);box-shadow:0 4px 15px rgba(212,175,55,0.3)}
+.btn-gold:hover{background:var(--gold-dim);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:2px solid var(--gold);color:var(--gold);margin-left:8px}
+.btn-outline:hover{background:rgba(212,175,55,0.1)}
+.btn-group{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
+
+.calculate-section{text-align:center;margin:30px 0}
+
+/* Canvas (hidden) */
+#shareCanvas{display:none}
+
+/* Footer */
+footer{text-align:center;padding:30px 20px;margin-top:40px;border-top:1px solid var(--border);font-size:0.85rem;color:var(--text-dim)}
+footer a{color:var(--gold)}
+
+/* Toast */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#fff;padding:12px 24px;border-radius:8px;font-size:0.9rem;opacity:0;transition:all 0.3s ease;z-index:999;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Responsive */
+@media(max-width:600px){
+  header h1{font-size:1.3rem}
+  .stock-info{grid-template-columns:1fr}
+  .score-breakdown{grid-template-columns:1fr}
+  .total-score{font-size:3rem}
+  .btn-group{flex-direction:column;align-items:center}
+  .btn-outline{margin-left:0}
+  .container{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Buffett-Style Investment Scorecard</h1>
+  <p>Rate any stock using Warren Buffett's investing principles</p>
+  <a href="https://keeprule.com" target="_blank" class="powered-by">Powered by KeepRule.com</a>
+</header>
+
+<div class="container">
+
+  <!-- Stock Info -->
+  <div class="section">
+    <div class="section-title">Stock Information</div>
+    <div class="stock-info">
+      <label>Company Name
+        <input type="text" id="companyName" placeholder="e.g. Apple Inc.">
+      </label>
+      <label>Ticker Symbol
+        <input type="text" id="ticker" placeholder="e.g. AAPL" style="text-transform:uppercase">
+      </label>
+      <label>Industry / Sector
+        <select id="industry">
+          <option value="">Select industry...</option>
+          <option>Technology</option>
+          <option>Financial Services</option>
+          <option>Healthcare</option>
+          <option>Consumer Goods</option>
+          <option>Energy</option>
+          <option>Industrials</option>
+          <option>Real Estate</option>
+          <option>Utilities</option>
+          <option>Communication Services</option>
+          <option>Materials</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Current Price ($)
+        <input type="number" id="price" placeholder="e.g. 185.50" step="0.01">
+      </label>
+    </div>
+  </div>
+
+  <!-- Scoring Dimensions -->
+  <div class="section">
+    <div class="section-title">Score Each Dimension (1-10)</div>
+    <div id="dimensions"></div>
+  </div>
+
+  <!-- Calculate -->
+  <div class="calculate-section">
+    <button class="btn btn-gold" onclick="calculate()">Generate Scorecard</button>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="section">
+      <div class="section-title">Your Investment Scorecard</div>
+      <div class="results-card" id="resultsCard">
+        <div id="resultStock" style="font-size:1.2rem;font-weight:600;margin-bottom:4px"></div>
+        <div id="resultMeta" style="font-size:0.85rem;color:var(--text-dim);margin-bottom:20px"></div>
+        <div class="total-score" id="totalScore">0</div>
+        <div class="total-label">out of 100</div>
+        <div id="gradeEl" class="grade">-</div>
+        <div class="verdict" id="verdict"></div>
+        <div class="score-breakdown" id="breakdown"></div>
+        <div class="results-cta">
+          <p>Want to deepen your understanding of these investing principles?</p>
+          <a href="https://keeprule.com" target="_blank" class="btn btn-gold">Explore Principles on KeepRule.com</a>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-gold" onclick="downloadImage()">Download Scorecard Image</button>
+        <button class="btn btn-outline" onclick="copyShareLink()">Copy Share Link</button>
+        <button class="btn btn-outline" onclick="shareTwitter()">Share on X / Twitter</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Built with investing wisdom from <a href="https://keeprule.com" target="_blank">KeepRule.com</a> &mdash; The Ultimate Guide to Investment Principles
+</footer>
+
+<div class="toast" id="toast"></div>
+<canvas id="shareCanvas"></canvas>
+
+<script>
+const DIMENSIONS = [
+  {
+    key: 'moat',
+    name: 'Moat Strength',
+    desc: 'How strong and durable is the company\'s competitive advantage? (Brand, patents, network effects, switching costs)',
+    quote: '"In business, I look for economic castles protected by unbreachable moats."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'management',
+    name: 'Management Quality',
+    desc: 'Is leadership honest, capable, and shareholder-friendly? Do they allocate capital well?',
+    quote: '"We look for three things: intelligence, energy, and integrity. If they don\'t have the last one, the first two will kill you."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'financial',
+    name: 'Financial Health',
+    desc: 'Strong balance sheet? Consistent free cash flow? Healthy margins?',
+    quote: '"Cash is to a business as oxygen is to an individual: never thought about when it is present, the only thing in mind when it is absent."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'valuation',
+    name: 'Valuation',
+    desc: 'Is the current price reasonable relative to intrinsic value? Margin of safety?',
+    quote: '"Price is what you pay. Value is what you get."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'competitive',
+    name: 'Competitive Position',
+    desc: 'Market share, pricing power, barriers to entry for competitors?',
+    quote: '"The key to investing is determining the competitive advantage of any given company and, above all, the durability of that advantage."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'growth',
+    name: 'Growth Potential',
+    desc: 'Runway for revenue and earnings growth? Reinvestment opportunities?',
+    quote: '"It\'s far better to buy a wonderful company at a fair price than a fair company at a wonderful price."',
+    attr: '— Charlie Munger'
+  },
+  {
+    key: 'dividend',
+    name: 'Dividend History',
+    desc: 'Consistent dividend payments and growth? Sustainable payout ratio?',
+    quote: '"Do not save what is left after spending, but spend what is left after saving."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'debt',
+    name: 'Debt Level',
+    desc: 'Low debt-to-equity? Manageable interest coverage? Conservative leverage?',
+    quote: '"I\'ve seen more people fail because of liquor and leverage — leverage being borrowed money."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'roe',
+    name: 'ROE Consistency',
+    desc: 'Consistently high return on equity over 5-10 years? Above 15%?',
+    quote: '"The best business to own is one that over an extended period can employ large amounts of incremental capital at very high rates of return."',
+    attr: '— Warren Buffett'
+  },
+  {
+    key: 'circle',
+    name: 'Circle of Competence Fit',
+    desc: 'Do you truly understand this business, its industry, and its future?',
+    quote: '"Know your circle of competence, and stick within it. The size of that circle is not very important; knowing its boundaries, however, is vital."',
+    attr: '— Warren Buffett'
+  }
+];
+
+const GRADES = [
+  { min: 90, grade: 'A', cls: 'grade-A', verdict: 'Outstanding Buffett-grade investment. This stock checks nearly every box of value investing excellence.' },
+  { min: 75, grade: 'B', cls: 'grade-B', verdict: 'Strong investment candidate. Solid fundamentals with minor areas to watch.' },
+  { min: 60, grade: 'C', cls: 'grade-C', verdict: 'Average prospect. Some strengths but notable concerns that warrant deeper analysis.' },
+  { min: 40, grade: 'D', cls: 'grade-D', verdict: 'Below average. Significant weaknesses that Buffett would likely avoid.' },
+  { min: 0, grade: 'F', cls: 'grade-F', verdict: 'Fails the Buffett test. Too many red flags for a disciplined value investor.' }
+];
+
+// Render dimensions
+const dimContainer = document.getElementById('dimensions');
+DIMENSIONS.forEach((d, i) => {
+  dimContainer.innerHTML += `
+    <div class="dimension">
+      <div class="dim-header">
+        <span class="dim-name">${i + 1}. ${d.name}</span>
+        <span class="dim-score-display" id="display_${d.key}">5</span>
+      </div>
+      <div class="dim-desc">${d.desc}</div>
+      <div class="slider-row">
+        <span>1</span>
+        <input type="range" min="1" max="10" value="5" id="score_${d.key}" oninput="updateDisplay('${d.key}', this.value)">
+        <span>10</span>
+      </div>
+      <div class="dim-quote">${d.quote}<span class="quote-attr">${d.attr} &middot; via <a href="https://keeprule.com" target="_blank">KeepRule.com</a></span></div>
+    </div>`;
+});
+
+function updateDisplay(key, val) {
+  document.getElementById('display_' + key).textContent = val;
+}
+
+function calculate() {
+  const company = document.getElementById('companyName').value.trim() || 'Unnamed Stock';
+  const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+  const industry = document.getElementById('industry').value || 'N/A';
+  const price = document.getElementById('price').value;
+
+  let total = 0;
+  const scores = [];
+  DIMENSIONS.forEach(d => {
+    const v = parseInt(document.getElementById('score_' + d.key).value);
+    total += v;
+    scores.push({ name: d.name, score: v });
+  });
+
+  // Display
+  document.getElementById('resultStock').textContent = ticker ? `${company} (${ticker})` : company;
+  document.getElementById('resultMeta').textContent = `${industry}${price ? ' · $' + parseFloat(price).toFixed(2) : ''} · Scored on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`;
+
+  document.getElementById('totalScore').textContent = total;
+
+  const g = GRADES.find(g => total >= g.min);
+  const gradeEl = document.getElementById('gradeEl');
+  gradeEl.textContent = g.grade;
+  gradeEl.className = 'grade ' + g.cls;
+  document.getElementById('verdict').textContent = g.verdict;
+
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = scores.map(s => `<div class="breakdown-item"><span>${s.name}</span><span class="bi-score">${s.score}/10</span></div>`).join('');
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Update URL for sharing
+  const params = new URLSearchParams();
+  params.set('c', company);
+  if (ticker) params.set('t', ticker);
+  if (industry && industry !== 'N/A') params.set('i', industry);
+  if (price) params.set('p', price);
+  DIMENSIONS.forEach(d => {
+    params.set(d.key, document.getElementById('score_' + d.key).value);
+  });
+  history.replaceState(null, '', '?' + params.toString());
+}
+
+// Load from URL params
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('c')) return;
+  document.getElementById('companyName').value = params.get('c') || '';
+  document.getElementById('ticker').value = params.get('t') || '';
+  document.getElementById('industry').value = params.get('i') || '';
+  document.getElementById('price').value = params.get('p') || '';
+  DIMENSIONS.forEach(d => {
+    if (params.has(d.key)) {
+      const v = Math.min(10, Math.max(1, parseInt(params.get(d.key)) || 5));
+      document.getElementById('score_' + d.key).value = v;
+      document.getElementById('display_' + d.key).textContent = v;
+    }
+  });
+  setTimeout(() => calculate(), 100);
+}
+loadFromURL();
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyShareLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => showToast('Link copied to clipboard!'));
+}
+
+function shareTwitter() {
+  const company = document.getElementById('companyName').value.trim() || 'a stock';
+  const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+  const total = document.getElementById('totalScore').textContent;
+  const g = document.getElementById('gradeEl').textContent;
+  const label = ticker ? `$${ticker}` : company;
+  const text = `I scored ${label} using the Buffett-Style Investment Scorecard: ${total}/100 (Grade ${g}).\n\nRate your stocks with investing principles from @KeepRule:\n${window.location.href}`;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+}
+
+function downloadImage() {
+  const canvas = document.getElementById('shareCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1200, H = 1500;
+  canvas.width = W;
+  canvas.height = H;
+  const dpr = 1;
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#1a1a2e');
+  grad.addColorStop(1, '#0f3460');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Border
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(30, 30, W - 60, H - 60);
+
+  // Header
+  ctx.fillStyle = '#d4af37';
+  ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Buffett-Style Investment Scorecard', W / 2, 100);
+
+  ctx.fillStyle = '#a0a0b0';
+  ctx.font = '22px -apple-system, sans-serif';
+  ctx.fillText('Powered by KeepRule.com', W / 2, 140);
+
+  // Company
+  const company = document.getElementById('companyName').value.trim() || 'Unnamed Stock';
+  const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+  const industry = document.getElementById('industry').value || '';
+  const label = ticker ? `${company} (${ticker})` : company;
+
+  ctx.fillStyle = '#e8e8e8';
+  ctx.font = 'bold 36px -apple-system, sans-serif';
+  ctx.fillText(label, W / 2, 210);
+
+  if (industry) {
+    ctx.fillStyle = '#a0a0b0';
+    ctx.font = '22px -apple-system, sans-serif';
+    ctx.fillText(industry + ' · ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), W / 2, 250);
+  }
+
+  // Divider
+  ctx.strokeStyle = '#2a3a5a';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(80, 280); ctx.lineTo(W - 80, 280); ctx.stroke();
+
+  // Score bars
+  const scores = [];
+  DIMENSIONS.forEach(d => {
+    scores.push({ name: d.name, score: parseInt(document.getElementById('score_' + d.key).value) });
+  });
+
+  const barStartX = 100, barEndX = W - 200, barH = 32, gap = 70;
+  let y = 320;
+
+  scores.forEach(s => {
+    ctx.fillStyle = '#a0a0b0';
+    ctx.font = '20px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(s.name, barStartX, y);
+
+    // Bar background
+    const barY = y + 10;
+    const barW = barEndX - barStartX;
+    ctx.fillStyle = '#2a3a5a';
+    roundRect(ctx, barStartX, barY, barW, barH, 6);
+
+    // Bar fill
+    const pct = s.score / 10;
+    const color = pct >= 0.7 ? '#4caf50' : pct >= 0.5 ? '#ff9800' : '#e74c3c';
+    ctx.fillStyle = color;
+    if (pct > 0) roundRect(ctx, barStartX, barY, barW * pct, barH, 6);
+
+    // Score text
+    ctx.fillStyle = '#d4af37';
+    ctx.font = 'bold 24px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(s.score + '/10', W - 80, barY + 24);
+
+    y += gap;
+  });
+
+  // Divider
+  y += 10;
+  ctx.strokeStyle = '#2a3a5a';
+  ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(W - 80, y); ctx.stroke();
+
+  // Total + Grade
+  const total = parseInt(document.getElementById('totalScore').textContent);
+  const g = GRADES.find(g => total >= g.min);
+  y += 50;
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#d4af37';
+  ctx.font = 'bold 72px -apple-system, sans-serif';
+  ctx.fillText(total + '/100', W / 2 - 80, y + 10);
+
+  // Grade badge
+  const gradeColors = { A: '#4caf50', B: '#8bc34a', C: '#ff9800', D: '#ff5722', F: '#e74c3c' };
+  const gc = gradeColors[g.grade] || '#ff9800';
+  ctx.fillStyle = gc;
+  ctx.font = 'bold 64px -apple-system, sans-serif';
+  ctx.fillText(g.grade, W / 2 + 120, y + 10);
+
+  // Verdict
+  y += 50;
+  ctx.fillStyle = '#a0a0b0';
+  ctx.font = '20px -apple-system, sans-serif';
+  wrapText(ctx, g.verdict, W / 2, y, W - 200, 28);
+
+  // Footer CTA
+  ctx.fillStyle = '#d4af37';
+  ctx.font = 'bold 24px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Get more investing principles at KeepRule.com', W / 2, H - 80);
+
+  ctx.fillStyle = '#a0a0b0';
+  ctx.font = '18px -apple-system, sans-serif';
+  ctx.fillText('The Ultimate Guide to Investment Principles', W / 2, H - 50);
+
+  // Download
+  const link = document.createElement('a');
+  link.download = `scorecard-${(ticker || company).toLowerCase().replace(/\s+/g, '-')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('Scorecard image downloaded!');
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i] + ' ';
+    if (ctx.measureText(test).width > maxW && i > 0) {
+      ctx.fillText(line, x, y);
+      line = words[i] + ' ';
+      y += lineH;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line, x, y);
+}
+</script>
+</body>
+</html>
